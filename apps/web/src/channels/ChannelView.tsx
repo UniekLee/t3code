@@ -8,6 +8,7 @@ import { MessageList } from "./MessageList";
 import { ThreadPane } from "./ThreadPane";
 import { ChannelThreadsTab } from "./threadStates/ChannelThreadsTab";
 import type { ActiveThreadState } from "./threadStates/threadStates";
+import { useGlanceThreads } from "./threadStates/useGlanceThreads";
 import {
   useAgents,
   useChannelTimeline,
@@ -45,6 +46,12 @@ export function ChannelView({
   const schedules = useScheduledTasks();
   const channelSchedules = channelScheduleEntries(schedules.entries, channel);
   const scheduledRuns = useScheduledRunThreads(channelSchedules);
+  const channelThreadCount = useGlanceThreads().filter(
+    (thread) =>
+      thread.owner.kind === "channel" &&
+      thread.owner.key === channel.key &&
+      thread.state !== "settled",
+  ).length;
   const sendToChannel = useSendToChannel(channel);
   useMarkSeen(channel.coordinatorRef);
 
@@ -77,7 +84,7 @@ export function ChannelView({
           channel={channel}
           tab={tab}
           onTabChange={onTabChange}
-          threadCount={subThreads.length + scheduledRuns.length}
+          threadCount={channelThreadCount}
           scheduleCount={channelSchedules.length}
         />
         {tab === "messages" ? (
