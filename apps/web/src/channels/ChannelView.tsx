@@ -5,8 +5,9 @@ import { channelOwner } from "./attention/attention";
 import { SubThreadAttention, ThreadAttention } from "./attention/Inline";
 import { NewChannelEmptyState } from "./EmptyStates";
 import { MessageList } from "./MessageList";
-import { ThreadCard } from "./ThreadCard";
 import { ThreadPane } from "./ThreadPane";
+import { ChannelThreadsTab } from "./threadStates/ChannelThreadsTab";
+import type { ActiveThreadState } from "./threadStates/threadStates";
 import {
   useAgents,
   useChannelTimeline,
@@ -16,7 +17,6 @@ import {
 } from "./hooks";
 import { parseMention } from "./prompts";
 import { ChannelSchedules, channelScheduleEntries } from "./schedules/ChannelSchedules";
-import { ScheduledRunThreads } from "./schedules/ScheduledRunThreads";
 import { useScheduledRunThreads, useScheduledTasks } from "./schedules/useScheduledTasks";
 import type { Channel } from "./types";
 
@@ -24,16 +24,20 @@ export function ChannelView({
   channel,
   tab,
   openThreadId,
+  state,
   onTabChange,
   onOpenThread,
   onCloseThread,
+  onShowAllStates,
 }: {
   channel: Channel;
   tab: "messages" | "threads" | "schedules";
   openThreadId: string | null;
+  state: ActiveThreadState | null;
   onTabChange: (tab: "messages" | "threads" | "schedules") => void;
   onOpenThread: (childThreadId: string) => void;
   onCloseThread: () => void;
+  onShowAllStates: () => void;
 }) {
   const timeline = useChannelTimeline(channel.coordinatorRef, { kind: "coordinator" });
   const subThreads = useSubThreads(channel.coordinatorRef);
@@ -114,29 +118,15 @@ export function ChannelView({
             loading={schedules.loading}
           />
         ) : (
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-            {subThreads.length === 0 && scheduledRuns.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                No threads yet. Ask the coordinator to do some work and its tasks will appear here.
-              </p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {subThreads.map((thread) => (
-                  <ThreadCard
-                    key={thread.subagentId}
-                    thread={thread}
-                    selected={thread.childRef?.threadId === openThreadId}
-                    onOpenThread={(ref) => onOpenThread(ref.threadId)}
-                  />
-                ))}
-                <ScheduledRunThreads
-                  runs={scheduledRuns}
-                  selectedThreadId={openThreadId}
-                  onOpenThread={onOpenThread}
-                />
-              </div>
-            )}
-          </div>
+          <ChannelThreadsTab
+            channel={channel}
+            subThreads={subThreads}
+            scheduledRuns={scheduledRuns}
+            openThreadId={openThreadId}
+            state={state}
+            onOpenThread={onOpenThread}
+            onShowAllStates={onShowAllStates}
+          />
         )}
       </div>
       {openThreadId !== null ? (

@@ -20,6 +20,7 @@ import { Route as ChannelsIndexRouteImport } from './routes/channels.index'
 import { Route as ChatIndexRouteImport } from './routes/_chat.index'
 import { Route as ProjectsProjectKeyRouteImport } from './routes/projects.$projectKey'
 import { Route as ChannelsSchedulesRouteImport } from './routes/channels.schedules'
+import { Route as ChannelsBoardRouteImport } from './routes/channels.board'
 import { Route as ChannelsActivityRouteImport } from './routes/channels.activity'
 import { Route as ChatUsageRouteImport } from './routes/_chat.usage'
 import { Route as ChatSettingsRouteImport } from './routes/_chat.settings'
@@ -111,6 +112,11 @@ const ProjectsProjectKeyRoute = ProjectsProjectKeyRouteImport.update({
 const ChannelsSchedulesRoute = ChannelsSchedulesRouteImport.update({
   id: '/schedules',
   path: '/schedules',
+  getParentRoute: () => ChannelsRoute,
+} as any)
+const ChannelsBoardRoute = ChannelsBoardRouteImport.update({
+  id: '/board',
+  path: '/board',
   getParentRoute: () => ChannelsRoute,
 } as any)
 const ChannelsActivityRoute = ChannelsActivityRouteImport.update({
@@ -325,6 +331,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof ChatSettingsRouteWithChildren
   '/usage': typeof ChatUsageRoute
   '/channels/activity': typeof ChannelsActivityRoute
+  '/channels/board': typeof ChannelsBoardRoute
   '/channels/schedules': typeof ChannelsSchedulesRoute
   '/projects/$projectKey': typeof ProjectsProjectKeyRoute
   '/channels/': typeof ChannelsIndexRoute
@@ -373,6 +380,7 @@ export interface FileRoutesByTo {
   '/settings': typeof ChatSettingsRouteWithChildren
   '/usage': typeof ChatUsageRoute
   '/channels/activity': typeof ChannelsActivityRoute
+  '/channels/board': typeof ChannelsBoardRoute
   '/channels/schedules': typeof ChannelsSchedulesRoute
   '/projects/$projectKey': typeof ProjectsProjectKeyRoute
   '/': typeof ChatIndexRoute
@@ -425,6 +433,7 @@ export interface FileRoutesById {
   '/_chat/settings': typeof ChatSettingsRouteWithChildren
   '/_chat/usage': typeof ChatUsageRoute
   '/channels/activity': typeof ChannelsActivityRoute
+  '/channels/board': typeof ChannelsBoardRoute
   '/channels/schedules': typeof ChannelsSchedulesRoute
   '/projects/$projectKey': typeof ProjectsProjectKeyRoute
   '/_chat/': typeof ChatIndexRoute
@@ -478,6 +487,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/usage'
     | '/channels/activity'
+    | '/channels/board'
     | '/channels/schedules'
     | '/projects/$projectKey'
     | '/channels/'
@@ -526,6 +536,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/usage'
     | '/channels/activity'
+    | '/channels/board'
     | '/channels/schedules'
     | '/projects/$projectKey'
     | '/'
@@ -577,6 +588,7 @@ export interface FileRouteTypes {
     | '/_chat/settings'
     | '/_chat/usage'
     | '/channels/activity'
+    | '/channels/board'
     | '/channels/schedules'
     | '/projects/$projectKey'
     | '/_chat/'
@@ -705,6 +717,13 @@ declare module '@tanstack/react-router' {
       path: '/schedules'
       fullPath: '/channels/schedules'
       preLoaderRoute: typeof ChannelsSchedulesRouteImport
+      parentRoute: typeof ChannelsRoute
+    }
+    '/channels/board': {
+      id: '/channels/board'
+      path: '/board'
+      fullPath: '/channels/board'
+      preLoaderRoute: typeof ChannelsBoardRouteImport
       parentRoute: typeof ChannelsRoute
     }
     '/channels/activity': {
@@ -1064,6 +1083,7 @@ const ChatRouteWithChildren = ChatRoute._addFileChildren(ChatRouteChildren)
 
 interface ChannelsRouteChildren {
   ChannelsActivityRoute: typeof ChannelsActivityRoute
+  ChannelsBoardRoute: typeof ChannelsBoardRoute
   ChannelsSchedulesRoute: typeof ChannelsSchedulesRoute
   ChannelsIndexRoute: typeof ChannelsIndexRoute
   ChannelsEnvironmentIdProjectIdRoute: typeof ChannelsEnvironmentIdProjectIdRoute
@@ -1073,6 +1093,7 @@ interface ChannelsRouteChildren {
 
 const ChannelsRouteChildren: ChannelsRouteChildren = {
   ChannelsActivityRoute: ChannelsActivityRoute,
+  ChannelsBoardRoute: ChannelsBoardRoute,
   ChannelsSchedulesRoute: ChannelsSchedulesRoute,
   ChannelsIndexRoute: ChannelsIndexRoute,
   ChannelsEnvironmentIdProjectIdRoute: ChannelsEnvironmentIdProjectIdRoute,

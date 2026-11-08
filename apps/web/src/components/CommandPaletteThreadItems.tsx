@@ -14,7 +14,7 @@ import {
 } from "@t3tools/shared/paletteSearch";
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { useAtomValue } from "@effect/atom-react";
-import { useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { MessageSquareIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -32,8 +32,9 @@ import {
 import { useThreadSearch } from "../state/queries";
 import { primaryServerProvidersAtom } from "../state/server";
 import { threadEnvironment } from "../state/threads";
+import { useAgents, useChannels } from "../channels/hooks";
+import { navigateThreadFromPalette } from "../channels/commandPalette/navigate";
 import { useAtomCommand } from "../state/use-atom-command";
-import { buildThreadRouteParams } from "../threadRoutes";
 import { formatRelativeTimeLabel } from "../timestampFormat";
 import { buildThreadActionItems, ITEM_ICON_CLASS } from "./CommandPalette.logic";
 import { useEnvironmentLookups, useProjectLookups } from "./CommandPaletteLookups";
@@ -99,6 +100,9 @@ export function useCommandPaletteThreadItems(input: {
 }) {
   const { activeThread, threadSearchQuery } = input;
   const navigate = useNavigate();
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const { channels } = useChannels();
+  const agents = useAgents();
   const threads = useVisibleThreadShells();
   const { projectEnvironmentLocationById } = useEnvironmentLookups();
   const providerEntryByEnvironmentAndInstanceId = useProviderEntryByEnvironmentAndInstanceId();
@@ -183,9 +187,15 @@ export function useCommandPaletteThreadItems(input: {
           },
         });
       }
-      await navigate({
-        to: "/$environmentId/$threadId",
-        params: buildThreadRouteParams(scopeThreadRef(thread.environmentId, thread.id)),
+      await navigateThreadFromPalette(navigate, {
+        pathname,
+        thread: {
+          environmentId: thread.environmentId,
+          id: thread.id,
+          projectId: thread.projectId,
+        },
+        channels,
+        agents,
       });
     },
   });

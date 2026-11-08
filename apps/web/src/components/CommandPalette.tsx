@@ -236,6 +236,16 @@ import {
   remoteProjectSourceIcon,
   sourceControlHostIcon,
 } from "./CommandPaletteAddProject";
+import { useAgents, useChannels } from "../channels/hooks";
+import { isChannelsPathname } from "../channels/commandPalette/entries";
+import {
+  buildChannelsPaletteGroups,
+  withChannelsPaletteGroups,
+} from "../channels/commandPalette/groups";
+import {
+  navigateChannelsPalette,
+  navigateThreadFromPalette,
+} from "../channels/commandPalette/navigate";
 import { useCommandPaletteThreadItems } from "./CommandPaletteThreadItems";
 import { useCommandPaletteThemeItems } from "./CommandPaletteThemeItems";
 import {
@@ -503,6 +513,8 @@ function OpenCommandPaletteDialog(props: {
   };
   // Side chats and subagents open inside their parent, so opening a project never lands on one.
   const threads = useVisibleThreadShells().filter((thread) => !isSidebarHiddenThread(thread));
+  const { channels } = useChannels();
+  const agents = useAgents();
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
   const providersByEnvironment = useEnvironmentProviders();
   const { changeThemeItem, changeAppearanceItem, themeEditorItem } = useCommandPaletteThemeItems();
@@ -777,6 +789,14 @@ function OpenCommandPaletteDialog(props: {
   );
 
   const openProjectFromSearch = async (project: (typeof projects)[number]) => {
+    if (isChannelsPathname(pathname)) {
+      await navigateChannelsPalette(navigate, {
+        kind: "channel",
+        environmentId: project.environmentId,
+        projectId: project.id,
+      });
+      return;
+    }
     const group = projectGroupByTargetKey.get(`${project.environmentId}:${project.id}`);
     const groupedProjectKeys = group
       ? new Set(
@@ -1701,7 +1721,14 @@ function OpenCommandPaletteDialog(props: {
     });
   }
 
-  const rootGroups = buildRootGroups({ actionItems, recentThreadItems });
+  const rootGroups = withChannelsPaletteGroups(
+    buildRootGroups({ actionItems, recentThreadItems }),
+    buildChannelsPaletteGroups({
+      channels,
+      agents,
+      run: (destination) => navigateChannelsPalette(navigate, destination),
+    }),
+  );
   // Every setting goes to the palette's own matcher, so settings get the same
   // word starts and typo tolerance as threads.
   const settingsSearchItems: CommandPaletteActionItem[] = settingsForThisPlatform(
@@ -1780,9 +1807,15 @@ function OpenCommandPaletteDialog(props: {
             query: linkedThreadSearch.query,
             icon: <MessageSquareIcon className={ITEM_ICON_CLASS} />,
             runThread: async (thread) => {
-              await navigate({
-                to: "/$environmentId/$threadId",
-                params: buildThreadRouteParams(scopeThreadRef(thread.environmentId, thread.id)),
+              const projectId =
+                linkedThreadSearch?.linkedThreads?.threads.find(
+                  (candidate) => candidate.id === thread.id,
+                )?.projectId ?? null;
+              await navigateThreadFromPalette(navigate, {
+                pathname,
+                thread: { environmentId: thread.environmentId, id: thread.id, projectId },
+                channels,
+                agents,
               });
             },
           })

@@ -38,6 +38,16 @@ export type PullRequestListPreferencePatch = {
   [Key in keyof PullRequestListPreferences]?: PullRequestListPreferences[Key] | undefined;
 };
 
+/** Keep a pull-request list state. Thread glance uses the same search key for other values. */
+export function pullRequestListStateOr(
+  value: unknown,
+  fallback: PullRequestListState,
+): PullRequestListState {
+  return value === "all" || value === "open" || value === "closed" || value === "merged"
+    ? value
+    : fallback;
+}
+
 const DEFAULT_PULL_REQUEST_LIST_PREFERENCES = {
   involvement: "all",
   state: "open",

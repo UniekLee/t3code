@@ -10,6 +10,7 @@ import {
 
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
 
+import { pullRequestListStateOr } from "../components/pullRequest/pullRequestListPreferences";
 import { canOpenLinksInApp } from "../browser/browserLinkTarget";
 import { useOpenLink } from "../browser/useOpenLink";
 import { useClientSettings } from "../hooks/useSettings";
@@ -111,12 +112,15 @@ export function useOpenChangeRequestLink(
         if (!resolvedThreadRef) {
           void navigate({
             to: "/pull-requests",
-            search: (previous) => ({
-              ...previous,
-              involvement: previous.involvement ?? "all",
-              state: previous.state ?? "all",
-              ...pullRequestsSearch,
-            }),
+            search: (previous) => {
+              const { state: previousState, ...rest } = previous;
+              return {
+                ...rest,
+                involvement: previous.involvement ?? "all",
+                state: pullRequestListStateOr(previousState, "all"),
+                ...pullRequestsSearch,
+              };
+            },
             replace: true,
           });
         }

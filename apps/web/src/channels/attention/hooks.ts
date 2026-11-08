@@ -1,8 +1,10 @@
 import type { ScopedThreadRef } from "@t3tools/contracts";
+import { useAtomValue } from "@effect/atom-react";
 import { useNavigate } from "@tanstack/react-router";
 
 import { useNowMinute } from "~/hooks/useNowMinute";
 import { useQuietThreadShell, useQuietThreadShells } from "~/state/entities";
+import { loadedSecretRequestsAtom } from "~/state/loadedSecretRequests";
 
 import { useAgents, useChannels } from "../hooks";
 import {
@@ -24,8 +26,9 @@ export function useAttentionItems(): AttentionItem[] {
   const { channels } = useChannels();
   const agents = useAgents();
   const dismissed = useDismissedSet();
+  const secretsByThread = useAtomValue(loadedSecretRequestsAtom);
   const now = Date.parse(useNowMinute());
-  return deriveAttentionItems({ shells, channels, agents, dismissed, now });
+  return deriveAttentionItems({ shells, channels, agents, dismissed, secretsByThread, now });
 }
 
 /** What one on-screen thread asks of the viewer, from its shell alone. */

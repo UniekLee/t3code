@@ -7,6 +7,9 @@ import { AgentDialog } from "./AgentDialog";
 import { ActivityRow } from "./attention/ActivityRow";
 import { useAttentionChannelKeys } from "./attention/hooks";
 import { useAgents, useAgentThreadRef, useChannels, useUnread } from "./hooks";
+import { AgentStateMark, BoardSidebarLink, ChannelGlanceCounts } from "./threadStates/GlanceCounts";
+import { agentGlanceMark, totalNeedsInput } from "./threadStates/threadStates";
+import { useGlanceThreads } from "./threadStates/useGlanceThreads";
 import { connectionPhaseDotClassName, ConnectionStatusDot } from "~/components/ConnectionStatusDot";
 import { Input } from "~/components/ui/input";
 import { ScrollArea } from "~/components/ui/scroll-area";
@@ -19,8 +22,13 @@ import { cn } from "~/lib/utils";
 const ROW_CLASS =
   "flex h-7 w-full min-w-0 cursor-pointer items-center gap-1.5 rounded-md px-2 text-left text-sm text-sidebar-muted-foreground hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70";
 
-function UnreadDot() {
-  return <span aria-label="Unread" className="ms-auto size-2 shrink-0 rounded-full bg-primary" />;
+function UnreadDot({ trailing = true }: { trailing?: boolean }) {
+  return (
+    <span
+      aria-label="Unread"
+      className={cn("size-2 shrink-0 rounded-full bg-primary", trailing && "ms-auto")}
+    />
+  );
 }
 
 function NeedsYouDot() {
@@ -62,7 +70,15 @@ function ChannelRow({
   );
 }
 
-function AgentRow({ agent, selected }: { agent: CrossChannelAgent; selected: boolean }) {
+function AgentRow({
+  agent,
+  selected,
+  mark,
+}: {
+  agent: CrossChannelAgent;
+  selected: boolean;
+  mark: "needs-input" | "working" | null;
+}) {
   const unread = useUnread(useAgentThreadRef(agent));
   return (
     <Link
@@ -82,7 +98,12 @@ function AgentRow({ agent, selected }: { agent: CrossChannelAgent; selected: boo
         {agent.emoji}
       </span>
       <span className="min-w-0 truncate">{agent.name}</span>
-      {unread ? <UnreadDot /> : null}
+      {mark || unread ? (
+        <span className="ms-auto flex shrink-0 items-center gap-1.5">
+          {mark ? <AgentStateMark state={mark} /> : null}
+          {unread ? <UnreadDot trailing={false} /> : null}
+        </span>
+      ) : null}
     </Link>
   );
 }
@@ -134,6 +155,7 @@ function WorkspaceHeader() {
 export function ChannelsSidebar() {
   const { ready, channels } = useChannels();
   const agents = useAgents();
+  const glance = useGlanceThreads();
   const needsYouChannels = useAttentionChannelKeys();
   const params = useParams({ strict: false });
   const [query, setQuery] = useState("");
@@ -171,6 +193,7 @@ export function ChannelsSidebar() {
       <ScrollArea className="min-h-0 flex-1">
         <nav className="flex flex-col gap-2 p-2">
           <ActivityRow className={ROW_CLASS} />
+          <BoardSidebarLink className={ROW_CLASS} count={totalNeedsInput(glance)} />
           <Link
             to="/channels/schedules"
             activeOptions={{ exact: true }}
@@ -186,15 +209,17 @@ export function ChannelsSidebar() {
             onToggle={() => setChannelsOpen((value) => !value)}
           >
             {visibleChannels.map((channel) => (
-              <ChannelRow
-                key={channel.key}
-                channel={channel}
-                needsYou={needsYouChannels.has(channel.key)}
-                selected={
-                  params.environmentId === channel.environmentId &&
-                  params.projectId === channel.projectId
-                }
-              />
+              <div key={channel.key} className="flex flex-col">
+                <ChannelRow
+                  channel={channel}
+                  needsYou={needsYouChannels.has(channel.key)}
+                  selected={
+                    params.environmentId === channel.environmentId &&
+                    params.projectId === channel.projectId
+                  }
+                />
+                <ChannelGlanceCounts channel={channel} threads={glance} />
+              </div>
             ))}
             {visibleChannels.length === 0 ? (
               <p className="px-2 py-1 text-xs text-sidebar-muted-foreground">
@@ -208,7 +233,12 @@ export function ChannelsSidebar() {
             onToggle={() => setAgentsOpen((value) => !value)}
           >
             {visibleAgents.map((agent) => (
-              <AgentRow key={agent.id} agent={agent} selected={params.agentId === agent.id} />
+              <AgentRow
+                key={agent.id}
+                agent={agent}
+                selected={params.agentId === agent.id}
+                mark={agentGlanceMark(glance, agent.id)}
+              />
             ))}
             <button type="button" className={ROW_CLASS} onClick={() => setAddAgentOpen(true)}>
               <PlusIcon aria-hidden className="size-3.5 shrink-0" />
