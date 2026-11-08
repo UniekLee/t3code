@@ -3,10 +3,11 @@ import { useState } from "react";
 
 import type { Channel } from "./types";
 import { ChannelContextDialog } from "./ChannelContextDialog";
+import { ExpandWorkspaceButton } from "./ExpandWorkspaceButton";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 
-type ChannelTab = "messages" | "threads";
+type ChannelTab = "messages" | "threads" | "schedules";
 
 function HeaderTab({
   active,
@@ -40,11 +41,13 @@ export function ChannelHeader({
   tab,
   onTabChange,
   threadCount,
+  scheduleCount = 0,
 }: {
   channel: Channel;
   tab: ChannelTab;
   onTabChange: (tab: ChannelTab) => void;
   threadCount: number;
+  scheduleCount?: number;
 }) {
   const [contextOpen, setContextOpen] = useState(false);
   const hasContext = channel.context.trim().length > 0;
@@ -54,7 +57,14 @@ export function ChannelHeader({
       <div className="flex min-w-0 items-center gap-2">
         <HashIcon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
         <h1 className="min-w-0 truncate text-base font-semibold text-foreground">{channel.name}</h1>
-        <div className="ms-auto flex shrink-0 items-center">
+        <div className="ms-auto flex shrink-0 items-center gap-1">
+          {channel.coordinatorRef ? (
+            <ExpandWorkspaceButton
+              environmentId={channel.environmentId}
+              projectId={channel.projectId}
+              threadId={channel.coordinatorRef.threadId}
+            />
+          ) : null}
           <Button variant="ghost-muted" size="compact" onClick={() => setContextOpen(true)}>
             <PencilIcon />
             Edit context
@@ -77,6 +87,9 @@ export function ChannelHeader({
         </HeaderTab>
         <HeaderTab active={tab === "threads"} onClick={() => onTabChange("threads")}>
           Threads ({threadCount})
+        </HeaderTab>
+        <HeaderTab active={tab === "schedules"} onClick={() => onTabChange("schedules")}>
+          Schedules ({scheduleCount})
         </HeaderTab>
       </div>
       <ChannelContextDialog channel={channel} open={contextOpen} onOpenChange={setContextOpen} />

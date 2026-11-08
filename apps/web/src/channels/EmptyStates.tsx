@@ -28,8 +28,10 @@ export function AgentNoThreadEmptyState({ name }: { name: string }) {
   return (
     <Empty>
       <EmptyHeader>
-        <EmptyTitle>{name} has no thread yet</EmptyTitle>
-        <EmptyDescription>Edit and save the agent to create its thread.</EmptyDescription>
+        <EmptyTitle>Say hi to {name}</EmptyTitle>
+        <EmptyDescription>
+          Your first message starts its conversation. It reports back here after every sweep.
+        </EmptyDescription>
       </EmptyHeader>
     </Empty>
   );

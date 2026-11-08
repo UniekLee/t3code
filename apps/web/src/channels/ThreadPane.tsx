@@ -1,11 +1,13 @@
-import { useNavigate } from "@tanstack/react-router";
-import { ExternalLinkIcon, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 import { ThreadId } from "@t3tools/contracts";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { Button } from "~/components/ui/button";
 import { useQuietThreadShell } from "~/state/entities";
 import { ChannelComposer } from "./ChannelComposer";
+import { ExpandWorkspaceButton } from "./ExpandWorkspaceButton";
 import { authorLabel } from "./ChannelAvatar";
+import { channelOwner } from "./attention/attention";
+import { ThreadAttention } from "./attention/Inline";
 import { MessageList } from "./MessageList";
 import { ThreadStatusChip } from "./ThreadCard";
 import { useChannelTimeline, useSendToThread } from "./hooks";
@@ -26,7 +28,6 @@ export function ThreadPane({
   parentMessage: Extract<ChannelMessage, { kind: "message" }> | null;
   onClose: () => void;
 }) {
-  const navigate = useNavigate();
   const childRef = scopeThreadRef(channel.environmentId, ThreadId.make(childThreadId));
   const shell = useQuietThreadShell(childRef);
   const title = thread?.title ?? shell?.title ?? "Thread";
@@ -43,19 +44,13 @@ export function ThreadPane({
           </span>
           <span className="text-muted-foreground text-xs">Thread in #{channel.name}</span>
         </div>
-        <Button
-          variant="outline"
-          size="xs"
-          onClick={() =>
-            void navigate({
-              to: "/$environmentId/$threadId",
-              params: { environmentId: childRef.environmentId, threadId: childRef.threadId },
-            })
-          }
-        >
-          <ExternalLinkIcon />
-          Open in classic view
-        </Button>
+        <ExpandWorkspaceButton
+          environmentId={channel.environmentId}
+          projectId={channel.projectId}
+          threadId={childRef.threadId}
+          fromThread={childRef.threadId}
+          size="icon-xs"
+        />
         <Button variant="ghost" size="icon-xs" aria-label="Close thread" onClick={onClose}>
           <XIcon />
         </Button>
@@ -75,6 +70,7 @@ export function ThreadPane({
         workingLabel={`${title} is working`}
         onOpenThread={() => {}}
       />
+      <ThreadAttention threadRef={childRef} owner={channelOwner(channel)} subThread title={title} />
       <ChannelComposer
         key={childThreadId}
         placeholder="Reply in thread"

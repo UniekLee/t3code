@@ -13,7 +13,7 @@ import {
 } from "~/components/ui/empty";
 import { Spinner } from "~/components/ui/spinner";
 
-type ChannelTab = "messages" | "threads";
+type ChannelTab = "messages" | "threads" | "schedules";
 
 interface ChannelSearch {
   thread?: string;
@@ -57,7 +57,7 @@ function ChannelRoute() {
         void navigate({
           search: (prev) => ({
             ...(prev.thread ? { thread: prev.thread } : {}),
-            ...(next === "threads" ? { tab: next } : {}),
+            ...(next !== "messages" ? { tab: next } : {}),
           }),
         })
       }
@@ -68,7 +68,7 @@ function ChannelRoute() {
 export const Route = createFileRoute("/channels/$environmentId/$projectId")({
   validateSearch: (raw: Record<string, unknown>): ChannelSearch => ({
     ...(typeof raw.thread === "string" && raw.thread ? { thread: raw.thread } : {}),
-    ...(raw.tab === "threads" ? { tab: "threads" as const } : {}),
+    ...(raw.tab === "threads" || raw.tab === "schedules" ? { tab: raw.tab } : {}),
   }),
   component: ChannelRoute,
 });

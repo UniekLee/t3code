@@ -5,7 +5,10 @@ import { toastManager } from "~/components/ui/toast";
 import { useProjects } from "~/state/entities";
 import { AgentDialog } from "./AgentDialog";
 import { ChannelAvatar } from "./ChannelAvatar";
+import { agentOwner } from "./attention/attention";
+import { ThreadAttention } from "./attention/Inline";
 import { ChannelComposer } from "./ChannelComposer";
+import { ExpandWorkspaceButton } from "./ExpandWorkspaceButton";
 import { AgentNoThreadEmptyState, AgentNotFoundEmptyState } from "./EmptyStates";
 import { MessageList } from "./MessageList";
 import {
@@ -14,7 +17,7 @@ import {
   useChannelTimeline,
   useMarkSeen,
   useRunAgentNow,
-  useSendToThread,
+  useSendToAgent,
 } from "./hooks";
 import type { CrossChannelAgent } from "./types";
 
@@ -26,7 +29,7 @@ function AgentConversation({ agent }: { agent: CrossChannelAgent }) {
     name: agent.name,
     emoji: agent.emoji,
   });
-  const sendToThread = useSendToThread();
+  const sendToAgent = useSendToAgent();
   const runAgentNow = useRunAgentNow();
   const projects = useProjects();
   const [editing, setEditing] = useState(false);
@@ -63,12 +66,15 @@ function AgentConversation({ agent }: { agent: CrossChannelAgent }) {
           </span>
           <span className="truncate text-muted-foreground text-xs">{agent.role}</span>
         </div>
-        <Button
-          variant="outline"
-          size="xs"
-          disabled={threadRef === null}
-          onClick={() => void runSweep()}
-        >
+        {threadRef ? (
+          <ExpandWorkspaceButton
+            environmentId={agent.environmentId}
+            projectId={agent.homeProjectId}
+            threadId={threadRef.threadId}
+            fromAgent={agent.id}
+          />
+        ) : null}
+        <Button variant="outline" size="xs" onClick={() => void runSweep()}>
           <PlayIcon />
           Run sweep now
         </Button>
@@ -77,26 +83,27 @@ function AgentConversation({ agent }: { agent: CrossChannelAgent }) {
           Edit
         </Button>
       </header>
-      {threadRef === null ? (
-        <AgentNoThreadEmptyState name={agent.name} />
-      ) : (
-        <>
-          <MessageList
-            key={agent.id}
-            timeline={timeline}
-            environmentId={agent.environmentId}
-            workspaceRoot={workspaceRoot}
-            threadRef={threadRef}
-            workingLabel={`${agent.name} is working`}
-            onOpenThread={() => {}}
-          />
-          <ChannelComposer
-            key={agent.id}
-            placeholder={`Message @${agent.name}`}
-            onSend={(text) => sendToThread(threadRef, text)}
-          />
-        </>
-      )}
+      <MessageList
+        key={agent.id}
+        timeline={timeline}
+        environmentId={agent.environmentId}
+        workspaceRoot={workspaceRoot}
+        threadRef={threadRef}
+        workingLabel={`${agent.name} is working`}
+        empty={<AgentNoThreadEmptyState name={agent.name} />}
+        onOpenThread={() => {}}
+      />
+      <ThreadAttention
+        threadRef={threadRef}
+        owner={agentOwner(agent)}
+        subThread={false}
+        title={agent.name}
+      />
+      <ChannelComposer
+        key={`composer:${agent.id}`}
+        placeholder={`Message @${agent.handle}`}
+        onSend={(text) => sendToAgent(agent, text)}
+      />
       <AgentDialog open={editing} onOpenChange={setEditing} agent={agent} />
     </div>
   );

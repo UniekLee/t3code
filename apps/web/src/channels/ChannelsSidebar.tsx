@@ -1,9 +1,11 @@
 import { Link, useParams } from "@tanstack/react-router";
-import { ArrowLeftIcon, HashIcon, PlusIcon, SettingsIcon } from "lucide-react";
+import { AlarmClockIcon, ArrowLeftIcon, HashIcon, PlusIcon, SettingsIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import type { Channel, CrossChannelAgent } from "./types";
 import { AgentDialog } from "./AgentDialog";
+import { ActivityRow } from "./attention/ActivityRow";
+import { useAttentionChannelKeys } from "./attention/hooks";
 import { useAgents, useAgentThreadRef, useChannels, useUnread } from "./hooks";
 import { connectionPhaseDotClassName, ConnectionStatusDot } from "~/components/ConnectionStatusDot";
 import { Input } from "~/components/ui/input";
@@ -21,7 +23,21 @@ function UnreadDot() {
   return <span aria-label="Unread" className="ms-auto size-2 shrink-0 rounded-full bg-primary" />;
 }
 
-function ChannelRow({ channel, selected }: { channel: Channel; selected: boolean }) {
+function NeedsYouDot() {
+  return (
+    <span aria-label="Needs you" className="ms-auto size-2 shrink-0 rounded-full bg-warning" />
+  );
+}
+
+function ChannelRow({
+  channel,
+  selected,
+  needsYou,
+}: {
+  channel: Channel;
+  selected: boolean;
+  needsYou: boolean;
+}) {
   return (
     <Link
       to="/channels/$environmentId/$projectId"
@@ -30,12 +46,14 @@ function ChannelRow({ channel, selected }: { channel: Channel; selected: boolean
       className={cn(
         ROW_CLASS,
         selected && "bg-sidebar-row-selected text-sidebar-foreground",
-        channel.unread && !selected && "font-semibold text-sidebar-foreground",
+        (channel.unread || needsYou) && !selected && "font-semibold text-sidebar-foreground",
       )}
     >
       <HashIcon aria-hidden className="size-3.5 shrink-0" />
       <span className="min-w-0 truncate">{channel.name}</span>
-      {channel.active ? (
+      {needsYou ? (
+        <NeedsYouDot />
+      ) : channel.active ? (
         <Spinner aria-label="Coordinator working" size="xs" className="ms-auto shrink-0" />
       ) : channel.unread ? (
         <UnreadDot />
@@ -116,6 +134,7 @@ function WorkspaceHeader() {
 export function ChannelsSidebar() {
   const { ready, channels } = useChannels();
   const agents = useAgents();
+  const needsYouChannels = useAttentionChannelKeys();
   const params = useParams({ strict: false });
   const [query, setQuery] = useState("");
   const [channelsOpen, setChannelsOpen] = useState(true);
@@ -151,6 +170,16 @@ export function ChannelsSidebar() {
       </div>
       <ScrollArea className="min-h-0 flex-1">
         <nav className="flex flex-col gap-2 p-2">
+          <ActivityRow className={ROW_CLASS} />
+          <Link
+            to="/channels/schedules"
+            activeOptions={{ exact: true }}
+            className={ROW_CLASS}
+            activeProps={{ className: "bg-sidebar-row-selected text-sidebar-foreground" }}
+          >
+            <AlarmClockIcon aria-hidden className="size-3.5 shrink-0" />
+            <span>Schedules</span>
+          </Link>
           <Section
             label="Channels"
             expanded={channelsOpen}
@@ -160,6 +189,7 @@ export function ChannelsSidebar() {
               <ChannelRow
                 key={channel.key}
                 channel={channel}
+                needsYou={needsYouChannels.has(channel.key)}
                 selected={
                   params.environmentId === channel.environmentId &&
                   params.projectId === channel.projectId

@@ -544,10 +544,28 @@ export function useRemoveAgent(): (
 }
 
 export function useRunAgentNow(): (agent: CrossChannelAgent) => Promise<SendResult> {
-  const { sendFollowUp } = useThreadSenders();
-  return async (agent) => {
+  const sendToAgent = useSendToAgent();
+  return (agent) => sendToAgent(agent, buildAgentSweepPrompt(agent));
+}
+
+/** Sends to an agent's thread, creating it (brief first, then the text) when the agent has none yet. */
+export function useSendToAgent(): (agent: CrossChannelAgent, text: string) => Promise<SendResult> {
+  const { startNewThread, sendFollowUp } = useThreadSenders();
+  return async (agent, text) => {
     const ref = agentThreadRef(agent);
-    if (ref === null) return { ok: false, error: "Save the agent first so it has a thread." };
-    return sendFollowUp(ref, buildAgentSweepPrompt(agent));
+    if (ref !== null) return sendFollowUp(ref, text);
+    const project = readProject(scopeProjectRef(agent.environmentId, agent.homeProjectId));
+    if (project === null)
+      return { ok: false, error: "The agent's home project is no longer available." };
+    const created = await startNewThread(
+      project,
+      agentThreadTitle(agent),
+      joinWithUserText(buildAgentBrief(agent, { homeProjectTitle: project.title }), text),
+    );
+    if (!created.ok) return created;
+    const store = useChannelsStore.getState();
+    const latest = store.agents.find((candidate) => candidate.id === agent.id) ?? agent;
+    store.upsertAgent({ ...latest, threadId: created.threadRef.threadId });
+    return created;
   };
 }

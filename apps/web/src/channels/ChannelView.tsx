@@ -1,6 +1,8 @@
 import { toastManager } from "~/components/ui/toast";
 import { ChannelComposer } from "./ChannelComposer";
 import { ChannelHeader } from "./ChannelHeader";
+import { channelOwner } from "./attention/attention";
+import { SubThreadAttention, ThreadAttention } from "./attention/Inline";
 import { NewChannelEmptyState } from "./EmptyStates";
 import { MessageList } from "./MessageList";
 import { ThreadCard } from "./ThreadCard";
@@ -13,6 +15,9 @@ import {
   useSubThreads,
 } from "./hooks";
 import { parseMention } from "./prompts";
+import { ChannelSchedules, channelScheduleEntries } from "./schedules/ChannelSchedules";
+import { ScheduledRunThreads } from "./schedules/ScheduledRunThreads";
+import { useScheduledRunThreads, useScheduledTasks } from "./schedules/useScheduledTasks";
 import type { Channel } from "./types";
 
 export function ChannelView({
@@ -24,15 +29,18 @@ export function ChannelView({
   onCloseThread,
 }: {
   channel: Channel;
-  tab: "messages" | "threads";
+  tab: "messages" | "threads" | "schedules";
   openThreadId: string | null;
-  onTabChange: (tab: "messages" | "threads") => void;
+  onTabChange: (tab: "messages" | "threads" | "schedules") => void;
   onOpenThread: (childThreadId: string) => void;
   onCloseThread: () => void;
 }) {
   const timeline = useChannelTimeline(channel.coordinatorRef, { kind: "coordinator" });
   const subThreads = useSubThreads(channel.coordinatorRef);
   const agents = useAgents();
+  const schedules = useScheduledTasks();
+  const channelSchedules = channelScheduleEntries(schedules.entries, channel);
+  const scheduledRuns = useScheduledRunThreads(channelSchedules);
   const sendToChannel = useSendToChannel(channel);
   useMarkSeen(channel.coordinatorRef);
 
@@ -65,7 +73,8 @@ export function ChannelView({
           channel={channel}
           tab={tab}
           onTabChange={onTabChange}
-          threadCount={subThreads.length}
+          threadCount={subThreads.length + scheduledRuns.length}
+          scheduleCount={channelSchedules.length}
         />
         {tab === "messages" ? (
           <>
@@ -80,6 +89,17 @@ export function ChannelView({
               selectedThreadId={openThreadId}
               onOpenThread={(ref) => onOpenThread(ref.threadId)}
             />
+            <ThreadAttention
+              threadRef={channel.coordinatorRef}
+              owner={channelOwner(channel)}
+              subThread={false}
+              title="Coordinator"
+            />
+            <SubThreadAttention
+              channelKey={channel.key}
+              openThreadId={openThreadId}
+              onOpenThread={onOpenThread}
+            />
             <ChannelComposer
               key={channel.key}
               placeholder={`Message #${channel.name}`}
@@ -87,9 +107,15 @@ export function ChannelView({
               onSend={send}
             />
           </>
+        ) : tab === "schedules" ? (
+          <ChannelSchedules
+            channel={channel}
+            entries={channelSchedules}
+            loading={schedules.loading}
+          />
         ) : (
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-            {subThreads.length === 0 ? (
+            {subThreads.length === 0 && scheduledRuns.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 No threads yet. Ask the coordinator to do some work and its tasks will appear here.
               </p>
@@ -103,6 +129,11 @@ export function ChannelView({
                     onOpenThread={(ref) => onOpenThread(ref.threadId)}
                   />
                 ))}
+                <ScheduledRunThreads
+                  runs={scheduledRuns}
+                  selectedThreadId={openThreadId}
+                  onOpenThread={onOpenThread}
+                />
               </div>
             )}
           </div>

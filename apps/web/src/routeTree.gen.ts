@@ -19,6 +19,8 @@ import { Route as ChatRouteImport } from './routes/_chat'
 import { Route as ChannelsIndexRouteImport } from './routes/channels.index'
 import { Route as ChatIndexRouteImport } from './routes/_chat.index'
 import { Route as ProjectsProjectKeyRouteImport } from './routes/projects.$projectKey'
+import { Route as ChannelsSchedulesRouteImport } from './routes/channels.schedules'
+import { Route as ChannelsActivityRouteImport } from './routes/channels.activity'
 import { Route as ChatUsageRouteImport } from './routes/_chat.usage'
 import { Route as ChatSettingsRouteImport } from './routes/_chat.settings'
 import { Route as ChatPullRequestsRouteImport } from './routes/_chat.pull-requests'
@@ -55,6 +57,7 @@ import { Route as ChatSettingsAccessRouteImport } from './routes/_chat.settings.
 import { Route as ChatSettingsAboutRouteImport } from './routes/_chat.settings.about'
 import { Route as ChatDraftDraftIdRouteImport } from './routes/_chat.draft.$draftId'
 import { Route as ChatEnvironmentIdThreadIdRouteImport } from './routes/_chat.$environmentId.$threadId'
+import { Route as ChannelsEnvironmentIdProjectIdWorkspaceThreadKeyRouteImport } from './routes/channels.$environmentId.$projectId_.workspace.$threadKey'
 
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
@@ -104,6 +107,16 @@ const ProjectsProjectKeyRoute = ProjectsProjectKeyRouteImport.update({
   id: '/projects/$projectKey',
   path: '/projects/$projectKey',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ChannelsSchedulesRoute = ChannelsSchedulesRouteImport.update({
+  id: '/schedules',
+  path: '/schedules',
+  getParentRoute: () => ChannelsRoute,
+} as any)
+const ChannelsActivityRoute = ChannelsActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => ChannelsRoute,
 } as any)
 const ChatUsageRoute = ChatUsageRouteImport.update({
   id: '/usage',
@@ -292,6 +305,12 @@ const ChatEnvironmentIdThreadIdRoute =
     path: '/$environmentId/$threadId',
     getParentRoute: () => ChatRoute,
   } as any)
+const ChannelsEnvironmentIdProjectIdWorkspaceThreadKeyRoute =
+  ChannelsEnvironmentIdProjectIdWorkspaceThreadKeyRouteImport.update({
+    id: '/$environmentId/$projectId_/workspace/$threadKey',
+    path: '/$environmentId/$projectId/workspace/$threadKey',
+    getParentRoute: () => ChannelsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ChatIndexRoute
@@ -305,6 +324,8 @@ export interface FileRoutesByFullPath {
   '/pull-requests': typeof ChatPullRequestsRoute
   '/settings': typeof ChatSettingsRouteWithChildren
   '/usage': typeof ChatUsageRoute
+  '/channels/activity': typeof ChannelsActivityRoute
+  '/channels/schedules': typeof ChannelsSchedulesRoute
   '/projects/$projectKey': typeof ProjectsProjectKeyRoute
   '/channels/': typeof ChannelsIndexRoute
   '/$environmentId/$threadId': typeof ChatEnvironmentIdThreadIdRoute
@@ -339,6 +360,7 @@ export interface FileRoutesByFullPath {
   '/channels/$environmentId/$projectId': typeof ChannelsEnvironmentIdProjectIdRoute
   '/channels/agents/$agentId': typeof ChannelsAgentsAgentIdRoute
   '/threads/$environmentId/$threadId': typeof ThreadsEnvironmentIdThreadIdRoute
+  '/channels/$environmentId/$projectId/workspace/$threadKey': typeof ChannelsEnvironmentIdProjectIdWorkspaceThreadKeyRoute
 }
 export interface FileRoutesByTo {
   '/connect': typeof ConnectRoute
@@ -350,6 +372,8 @@ export interface FileRoutesByTo {
   '/pull-requests': typeof ChatPullRequestsRoute
   '/settings': typeof ChatSettingsRouteWithChildren
   '/usage': typeof ChatUsageRoute
+  '/channels/activity': typeof ChannelsActivityRoute
+  '/channels/schedules': typeof ChannelsSchedulesRoute
   '/projects/$projectKey': typeof ProjectsProjectKeyRoute
   '/': typeof ChatIndexRoute
   '/channels': typeof ChannelsIndexRoute
@@ -385,6 +409,7 @@ export interface FileRoutesByTo {
   '/channels/$environmentId/$projectId': typeof ChannelsEnvironmentIdProjectIdRoute
   '/channels/agents/$agentId': typeof ChannelsAgentsAgentIdRoute
   '/threads/$environmentId/$threadId': typeof ThreadsEnvironmentIdThreadIdRoute
+  '/channels/$environmentId/$projectId/workspace/$threadKey': typeof ChannelsEnvironmentIdProjectIdWorkspaceThreadKeyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -399,6 +424,8 @@ export interface FileRoutesById {
   '/_chat/pull-requests': typeof ChatPullRequestsRoute
   '/_chat/settings': typeof ChatSettingsRouteWithChildren
   '/_chat/usage': typeof ChatUsageRoute
+  '/channels/activity': typeof ChannelsActivityRoute
+  '/channels/schedules': typeof ChannelsSchedulesRoute
   '/projects/$projectKey': typeof ProjectsProjectKeyRoute
   '/_chat/': typeof ChatIndexRoute
   '/channels/': typeof ChannelsIndexRoute
@@ -434,6 +461,7 @@ export interface FileRoutesById {
   '/channels/$environmentId/$projectId': typeof ChannelsEnvironmentIdProjectIdRoute
   '/channels/agents/$agentId': typeof ChannelsAgentsAgentIdRoute
   '/threads/$environmentId/$threadId': typeof ThreadsEnvironmentIdThreadIdRoute
+  '/channels/$environmentId/$projectId_/workspace/$threadKey': typeof ChannelsEnvironmentIdProjectIdWorkspaceThreadKeyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -449,6 +477,8 @@ export interface FileRouteTypes {
     | '/pull-requests'
     | '/settings'
     | '/usage'
+    | '/channels/activity'
+    | '/channels/schedules'
     | '/projects/$projectKey'
     | '/channels/'
     | '/$environmentId/$threadId'
@@ -483,6 +513,7 @@ export interface FileRouteTypes {
     | '/channels/$environmentId/$projectId'
     | '/channels/agents/$agentId'
     | '/threads/$environmentId/$threadId'
+    | '/channels/$environmentId/$projectId/workspace/$threadKey'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/connect'
@@ -494,6 +525,8 @@ export interface FileRouteTypes {
     | '/pull-requests'
     | '/settings'
     | '/usage'
+    | '/channels/activity'
+    | '/channels/schedules'
     | '/projects/$projectKey'
     | '/'
     | '/channels'
@@ -529,6 +562,7 @@ export interface FileRouteTypes {
     | '/channels/$environmentId/$projectId'
     | '/channels/agents/$agentId'
     | '/threads/$environmentId/$threadId'
+    | '/channels/$environmentId/$projectId/workspace/$threadKey'
   id:
     | '__root__'
     | '/_chat'
@@ -542,6 +576,8 @@ export interface FileRouteTypes {
     | '/_chat/pull-requests'
     | '/_chat/settings'
     | '/_chat/usage'
+    | '/channels/activity'
+    | '/channels/schedules'
     | '/projects/$projectKey'
     | '/_chat/'
     | '/channels/'
@@ -577,6 +613,7 @@ export interface FileRouteTypes {
     | '/channels/$environmentId/$projectId'
     | '/channels/agents/$agentId'
     | '/threads/$environmentId/$threadId'
+    | '/channels/$environmentId/$projectId_/workspace/$threadKey'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -662,6 +699,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/projects/$projectKey'
       preLoaderRoute: typeof ProjectsProjectKeyRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/channels/schedules': {
+      id: '/channels/schedules'
+      path: '/schedules'
+      fullPath: '/channels/schedules'
+      preLoaderRoute: typeof ChannelsSchedulesRouteImport
+      parentRoute: typeof ChannelsRoute
+    }
+    '/channels/activity': {
+      id: '/channels/activity'
+      path: '/activity'
+      fullPath: '/channels/activity'
+      preLoaderRoute: typeof ChannelsActivityRouteImport
+      parentRoute: typeof ChannelsRoute
     }
     '/_chat/usage': {
       id: '/_chat/usage'
@@ -915,6 +966,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatEnvironmentIdThreadIdRouteImport
       parentRoute: typeof ChatRoute
     }
+    '/channels/$environmentId/$projectId_/workspace/$threadKey': {
+      id: '/channels/$environmentId/$projectId_/workspace/$threadKey'
+      path: '/$environmentId/$projectId/workspace/$threadKey'
+      fullPath: '/channels/$environmentId/$projectId/workspace/$threadKey'
+      preLoaderRoute: typeof ChannelsEnvironmentIdProjectIdWorkspaceThreadKeyRouteImport
+      parentRoute: typeof ChannelsRoute
+    }
   }
 }
 
@@ -1005,15 +1063,22 @@ const ChatRouteChildren: ChatRouteChildren = {
 const ChatRouteWithChildren = ChatRoute._addFileChildren(ChatRouteChildren)
 
 interface ChannelsRouteChildren {
+  ChannelsActivityRoute: typeof ChannelsActivityRoute
+  ChannelsSchedulesRoute: typeof ChannelsSchedulesRoute
   ChannelsIndexRoute: typeof ChannelsIndexRoute
   ChannelsEnvironmentIdProjectIdRoute: typeof ChannelsEnvironmentIdProjectIdRoute
   ChannelsAgentsAgentIdRoute: typeof ChannelsAgentsAgentIdRoute
+  ChannelsEnvironmentIdProjectIdWorkspaceThreadKeyRoute: typeof ChannelsEnvironmentIdProjectIdWorkspaceThreadKeyRoute
 }
 
 const ChannelsRouteChildren: ChannelsRouteChildren = {
+  ChannelsActivityRoute: ChannelsActivityRoute,
+  ChannelsSchedulesRoute: ChannelsSchedulesRoute,
   ChannelsIndexRoute: ChannelsIndexRoute,
   ChannelsEnvironmentIdProjectIdRoute: ChannelsEnvironmentIdProjectIdRoute,
   ChannelsAgentsAgentIdRoute: ChannelsAgentsAgentIdRoute,
+  ChannelsEnvironmentIdProjectIdWorkspaceThreadKeyRoute:
+    ChannelsEnvironmentIdProjectIdWorkspaceThreadKeyRoute,
 }
 
 const ChannelsRouteWithChildren = ChannelsRoute._addFileChildren(

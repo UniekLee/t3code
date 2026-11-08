@@ -60,6 +60,7 @@ import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
 import { useNowMinute } from "../../hooks/useNowMinute";
 import {
   useEnvironment,
+  useEnvironments,
   useEnvironmentHttpBaseUrl,
   type EnvironmentPresentation,
 } from "../../state/environments";
@@ -89,9 +90,11 @@ import { resolvePastedPath } from "@t3tools/shared/path";
 import { useManagedPolicy } from "~/state/managedPolicy";
 import { ManagedNotice } from "../ManagedPolicy";
 import { readEnvironmentScope } from "~/state/session";
-import { useSettingsScope } from "./SettingsScopeContext";
+import { useOptionalSettingsScope, useSettingsScope } from "./SettingsScopeContext";
+import { isConnectedWithConfig } from "./scopedSettings";
 import { EnvironmentRow, useEnvironmentTransportLabel } from "./EnvironmentRow";
 import { SettingsGroup } from "./SettingsGroup";
+import type { ResolvedSettingsScope } from "./settingsScope";
 import { settingsScopeEnvironmentLabel, settingsScopeEnvironmentLabels } from "./settingsScopeAxis";
 import {
   WEBHOOK_SIGNATURE_DEFAULTS,
@@ -384,7 +387,7 @@ function deliveryOutcomeVariant(outcome: string) {
   return "outline";
 }
 
-function statusVariant(status: ScheduledTask["lastRunStatus"]) {
+export function statusVariant(status: ScheduledTask["lastRunStatus"]) {
   if (status === "failed") return "error";
   if (status === "succeeded") return "success";
   if (status === "running") return "info";
@@ -1161,12 +1164,15 @@ function WebhookDeliveryMode({ environmentId }: { readonly environmentId: Enviro
   );
 }
 
-function ScheduledTaskEditorDialog({
+export function ScheduledTaskEditorDialog({
   initialEnvironmentId,
+  initialProjectId,
   task,
   onClose,
 }: {
   readonly initialEnvironmentId: EnvironmentId;
+  /** Preselects the project of a new task. */
+  readonly initialProjectId?: ProjectId | undefined;
   readonly task: ScheduledTask | null;
   readonly onClose: () => void;
 }) {
@@ -1182,6 +1188,7 @@ function ScheduledTaskEditorDialog({
       <DialogPopup className="max-w-xl">
         <ScheduledTaskEditorForm
           initialEnvironmentId={initialEnvironmentId}
+          initialProjectId={initialProjectId}
           task={task}
           saving={saving}
           onSavingChange={setSaving}
@@ -1351,20 +1358,42 @@ function ScheduledTaskDestination({
   );
 }
 
+/** Outside Settings there is no scope provider: every connected environment and project is in scope. */
+function useEditorScope() {
+  const settingsScope = useOptionalSettingsScope();
+  const { environments } = useEnvironments();
+  if (settingsScope) {
+    return {
+      scope: settingsScope.scope,
+      connectedEnvironments: settingsScope.connectedEnvironments,
+    };
+  }
+  const connectedEnvironments = environments.filter(isConnectedWithConfig);
+  const scope: ResolvedSettingsScope = {
+    kind: "all",
+    label: "All",
+    members: [],
+    environmentIds: connectedEnvironments.map((entry) => entry.environmentId),
+  };
+  return { scope, connectedEnvironments };
+}
+
 function ScheduledTaskEditorForm({
   initialEnvironmentId,
+  initialProjectId,
   task,
   saving,
   onSavingChange: setSaving,
   onClose,
 }: {
   readonly initialEnvironmentId: EnvironmentId;
+  readonly initialProjectId?: ProjectId | undefined;
   readonly task: ScheduledTask | null;
   readonly saving: boolean;
   readonly onSavingChange: (saving: boolean) => void;
   readonly onClose: () => void;
 }) {
-  const { scope, connectedEnvironments } = useSettingsScope();
+  const { scope, connectedEnvironments } = useEditorScope();
   const [environmentId, setEnvironmentId] = useState(initialEnvironmentId);
   const environment = useEnvironment(environmentId);
   // Older servers reject one-time schedules, so offer Once only where it can save.
@@ -1399,7 +1428,10 @@ function ScheduledTaskEditorForm({
       ? taskToDraft(task)
       : {
           ...EMPTY_DRAFT,
-          projectId: defaultScheduledTaskProjectId(scopedProjects, scope),
+          projectId:
+            initialProjectId && scopedProjects.some((project) => project.id === initialProjectId)
+              ? initialProjectId
+              : defaultScheduledTaskProjectId(scopedProjects, scope),
         },
   );
   // Pinned first. The chosen project stays listed after it is archived.
