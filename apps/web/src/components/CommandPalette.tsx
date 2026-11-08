@@ -64,6 +64,7 @@ import {
   FolderGit2Icon,
   FolderIcon,
   FolderPlusIcon,
+  HashIcon,
   MessageSquareDashedIcon,
   LinkIcon,
   MessageSquareIcon,
@@ -1621,6 +1622,17 @@ function OpenCommandPaletteDialog(props: {
       },
     });
   }
+
+  actionItems.push({
+    kind: "action",
+    value: "action:channels",
+    searchTerms: ["channels", "slack", "agents", "coordinator"],
+    title: "Open Channels view",
+    icon: <HashIcon className={ITEM_ICON_CLASS} />,
+    run: async () => {
+      await navigate({ to: "/channels" });
+    },
+  });
 
   actionItems.push({
     kind: "action",

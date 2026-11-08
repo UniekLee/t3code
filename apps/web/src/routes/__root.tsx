@@ -184,9 +184,13 @@ function RootRouteBranch() {
 
   const appShell = (
     <CommandPalette>
-      <AppSidebarLayout>
+      {pathname === "/channels" || pathname.startsWith("/channels/") ? (
         <Outlet />
-      </AppSidebarLayout>
+      ) : (
+        <AppSidebarLayout>
+          <Outlet />
+        </AppSidebarLayout>
+      )}
     </CommandPalette>
   );
 
