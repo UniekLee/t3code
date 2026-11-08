@@ -1,6 +1,5 @@
 import type * as DateTime from "effect/DateTime";
 import { useAtomValue } from "@effect/atom-react";
-import { useEffect } from "react";
 import type {
   EnvironmentProject,
   EnvironmentThread,
@@ -36,7 +35,6 @@ import {
   allEnvironmentProjectSnapshotsReadyAtom,
   allEnvironmentShellsBootstrappedAtom,
 } from "./shell";
-import { publishLoadedSecretRequests } from "./loadedSecretRequests";
 import { environmentThreadDetails, environmentThreadShells } from "./threads";
 import { waitForAtomValue } from "./waitForAtomValue";
 
@@ -174,31 +172,18 @@ export function useChildThreadInputs(ref: ScopedThreadRef | null) {
 }
 
 export function useThreadProjection(ref: ScopedThreadRef | null): EnvironmentThread | null {
-  const thread = useAtomValue(
+  return useAtomValue(
     ref === null ? EMPTY_THREAD_PROJECTION_ATOM : environmentThreadDetails.threadAtom(ref),
   );
-  // Shells do not carry secret requests. Keep the ones this projection already
-  // loaded so glance counts can see them without fetching every thread.
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- writes pending secret requests from the loaded projection into the atom registry while this thread is open
-  useEffect(() => {
-    publishLoadedSecretRequests(ref, thread);
-  }, [ref, thread]);
-  return thread;
 }
 
 /** The thread's structure, held through streamed assistant and reasoning text; see ThreadStructure. */
 export function useQuietThreadProjection(
   ref: ScopedThreadRef | null,
 ): EnvironmentThreadStructure | null {
-  const thread = useAtomValue(
+  return useAtomValue(
     ref === null ? EMPTY_THREAD_PROJECTION_ATOM : environmentThreadDetails.quietThreadAtom(ref),
   );
-  // Same secret publish as useThreadProjection, for readers of the quiet projection.
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- writes pending secret requests from the loaded projection into the atom registry while this thread is open
-  useEffect(() => {
-    publishLoadedSecretRequests(ref, thread);
-  }, [ref, thread]);
-  return thread;
 }
 
 /** The detail's live visit mark, which the thread structure leaves out. */

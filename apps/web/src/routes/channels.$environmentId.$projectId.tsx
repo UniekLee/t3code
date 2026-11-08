@@ -19,12 +19,12 @@ type ChannelTab = "messages" | "threads" | "schedules";
 interface ChannelSearch {
   thread?: string;
   tab?: ChannelTab;
-  state?: ActiveThreadState;
+  filter?: ActiveThreadState;
 }
 
 function ChannelRoute() {
   const { environmentId, projectId } = Route.useParams();
-  const { thread, tab, state } = Route.useSearch();
+  const { thread, tab, filter } = Route.useSearch();
   const navigate = Route.useNavigate();
   const { ready } = useChannels();
   const channel = useChannel(EnvironmentId.make(environmentId), ProjectId.make(projectId));
@@ -51,7 +51,7 @@ function ChannelRoute() {
       channel={channel}
       openThreadId={thread ?? null}
       tab={tab ?? "messages"}
-      state={state ?? null}
+      state={filter ?? null}
       onOpenThread={(childThreadId) =>
         void navigate({ search: (prev) => ({ ...prev, thread: childThreadId }) })
       }
@@ -59,7 +59,7 @@ function ChannelRoute() {
         void navigate({
           search: (prev) => ({
             ...(prev.tab ? { tab: prev.tab } : {}),
-            ...(prev.state ? { state: prev.state } : {}),
+            ...(prev.filter ? { filter: prev.filter } : {}),
           }),
         })
       }
@@ -75,7 +75,7 @@ function ChannelRoute() {
         void navigate({
           search: (prev) => ({
             ...(prev.thread ? { thread: prev.thread } : {}),
-            ...(prev.state ? { state: prev.state } : {}),
+            ...(prev.filter ? { filter: prev.filter } : {}),
             ...(next !== "messages" ? { tab: next } : {}),
           }),
         })
@@ -88,7 +88,7 @@ export const Route = createFileRoute("/channels/$environmentId/$projectId")({
   validateSearch: (raw: Record<string, unknown>): ChannelSearch => ({
     ...(typeof raw.thread === "string" && raw.thread ? { thread: raw.thread } : {}),
     ...(raw.tab === "threads" || raw.tab === "schedules" ? { tab: raw.tab } : {}),
-    ...(isActiveThreadState(raw.state) ? { state: raw.state } : {}),
+    ...(isActiveThreadState(raw.filter) ? { filter: raw.filter } : {}),
   }),
   component: ChannelRoute,
 });

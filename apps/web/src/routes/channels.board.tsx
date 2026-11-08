@@ -4,17 +4,17 @@ import { ThreadStateBoard } from "~/channels/threadStates/ThreadStateBoard";
 import { isActiveThreadState, type ActiveThreadState } from "~/channels/threadStates/threadStates";
 
 interface BoardSearch {
-  state?: ActiveThreadState;
+  filter?: ActiveThreadState;
 }
 
 function BoardRoute() {
-  const { state } = Route.useSearch();
+  const { filter } = Route.useSearch();
   const navigate = Route.useNavigate();
   return (
     <ThreadStateBoard
-      state={state ?? "all"}
+      state={filter ?? "all"}
       onStateChange={(next) => {
-        void navigate({ search: next === "all" ? {} : { state: next } });
+        void navigate({ search: next === "all" ? {} : { filter: next } });
       }}
     />
   );
@@ -22,6 +22,6 @@ function BoardRoute() {
 
 export const Route = createFileRoute("/channels/board")({
   validateSearch: (raw: Record<string, unknown>): BoardSearch =>
-    isActiveThreadState(raw.state) ? { state: raw.state } : {},
+    isActiveThreadState(raw.filter) ? { filter: raw.filter } : {},
   component: BoardRoute,
 });

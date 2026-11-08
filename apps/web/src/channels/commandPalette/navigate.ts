@@ -1,6 +1,7 @@
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentId, ProjectId, ThreadId } from "@t3tools/contracts";
 
+import { useRightPanelStore } from "~/rightPanelStore";
 import { buildThreadRouteParams } from "~/threadRoutes";
 
 import {
@@ -20,25 +21,23 @@ type ChannelsPaletteNavigate = (
     | { to: "/channels/agents/$agentId"; params: { agentId: string } }
     | { to: "/channels/activity" }
     | { to: "/channels/schedules" }
+    | { to: "/channels/board"; search?: { filter: ChannelsThreadState } }
+    | {
+        to: "/channels/$environmentId/$projectId/workspace/$threadKey";
+        params: { environmentId: EnvironmentId; projectId: ProjectId; threadKey: string };
+      }
     | {
         to: "/$environmentId/$threadId";
         params: { environmentId: EnvironmentId; threadId: ThreadId };
       },
 ) => Promise<void>;
 
-type BoardNavigate = (options: {
-  to: "/channels/board";
-  search?: { state: ChannelsThreadState };
-}) => Promise<void>;
-
 function navigateBoard(
   navigate: ChannelsPaletteNavigate,
   state: ChannelsThreadState | undefined,
 ): Promise<void> {
-  // routeTree.gen.ts does not register /channels/board yet.
-  const boardNavigate = navigate as unknown as BoardNavigate;
-  if (state === undefined) return boardNavigate({ to: "/channels/board" });
-  return boardNavigate({ to: "/channels/board", search: { state } });
+  if (state === undefined) return navigate({ to: "/channels/board" });
+  return navigate({ to: "/channels/board", search: { filter: state } });
 }
 
 export function navigateChannelsPalette(
@@ -71,6 +70,21 @@ export function navigateChannelsPalette(
       return navigate({ to: "/channels/schedules" });
     case "board":
       return navigateBoard(navigate, destination.state);
+    case "thread-tool": {
+      if (destination.tool !== "workspace") {
+        useRightPanelStore
+          .getState()
+          .open(scopeThreadRef(destination.environmentId, destination.threadId), destination.tool);
+      }
+      return navigate({
+        to: "/channels/$environmentId/$projectId/workspace/$threadKey",
+        params: {
+          environmentId: destination.environmentId,
+          projectId: destination.projectId,
+          threadKey: destination.threadId,
+        },
+      });
+    }
   }
 }
 

@@ -2,10 +2,7 @@ import type { EnvironmentId, ProjectId } from "@t3tools/contracts";
 
 import type { OpenPreviewMutation } from "./browser/openFileInPreview";
 import type { ClosedView, ClosedViewEntry } from "./closedViewStore";
-import {
-  pullRequestListStateOr,
-  type PullRequestListPreferences,
-} from "./components/pullRequest/pullRequestListPreferences";
+import type { PullRequestListPreferences } from "./components/pullRequest/pullRequestListPreferences";
 import { openPreviewSession } from "./components/preview/openPreviewSession";
 import {
   rightPanelHostRef,
@@ -56,9 +53,7 @@ export function planNextReopen(
   return { drop, restore: null };
 }
 
-type PullRequestsSearchLike = Omit<Partial<PullRequestListPreferences>, "state"> & {
-  /** The router flattens every route's `state` search key into one value. */
-  readonly state?: unknown;
+type PullRequestsSearchLike = Partial<PullRequestListPreferences> & {
   repository?: string;
   number?: number;
   selectedProjectId?: ProjectId;
@@ -69,20 +64,19 @@ type PullRequestsSearchLike = Omit<Partial<PullRequestListPreferences>, "state">
 export function pullRequestsSearchForRestore<S extends PullRequestsSearchLike>(
   previous: S,
   selected: RightPanelSurface | null,
-): Omit<S, "state"> & PullRequestListPreferences {
+): S & PullRequestListPreferences {
   const {
     repository: _repository,
     number: _number,
     selectedProjectId: _projectId,
     selectedHost: _host,
     selectedEnvironmentId: _environmentId,
-    state: previousState,
     ...filters
   } = previous;
   return {
     ...filters,
     involvement: previous.involvement ?? "all",
-    state: pullRequestListStateOr(previousState, "open"),
+    state: previous.state ?? "open",
     ...(selected?.kind === "pull-request"
       ? {
           repository: selected.repository,
@@ -94,7 +88,7 @@ export function pullRequestsSearchForRestore<S extends PullRequestsSearchLike>(
             : { selectedEnvironmentId: selected.environmentId as EnvironmentId }),
         }
       : {}),
-  } as Omit<S, "state"> & PullRequestListPreferences;
+  } as S & PullRequestListPreferences;
 }
 
 export async function reopenClosedView(

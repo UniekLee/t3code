@@ -237,7 +237,7 @@ import {
   sourceControlHostIcon,
 } from "./CommandPaletteAddProject";
 import { useAgents, useChannels } from "../channels/hooks";
-import { isChannelsPathname } from "../channels/commandPalette/entries";
+import { isChannelsPathname, resolveChannelsToolContext } from "../channels/commandPalette/entries";
 import {
   buildChannelsPaletteGroups,
   withChannelsPaletteGroups,
@@ -411,6 +411,9 @@ function OpenCommandPaletteDialog(props: {
 }) {
   const navigate = useNavigate();
   const pathname = useLocation({ select: (location) => location.pathname });
+  const channelsSearchThread = useLocation({
+    select: (location) => (location.search as { thread?: unknown }).thread,
+  });
   const { openChildSearch, setOpen } = props;
   // Keyed by palette session: the intent and restored search only seed this
   // mount, and closing must not change what the closing palette shows.
@@ -1726,6 +1729,12 @@ function OpenCommandPaletteDialog(props: {
     buildChannelsPaletteGroups({
       channels,
       agents,
+      toolContext: resolveChannelsToolContext({
+        pathname,
+        searchThread: channelsSearchThread,
+        channels,
+        agents,
+      }),
       run: (destination) => navigateChannelsPalette(navigate, destination),
     }),
   );

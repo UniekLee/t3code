@@ -46,7 +46,7 @@ export function ChannelGlanceCounts({
             key={state}
             to="/channels/$environmentId/$projectId"
             params={{ environmentId: channel.environmentId, projectId: channel.projectId }}
-            search={{ tab: "threads", state }}
+            search={{ tab: "threads", filter: state }}
             aria-label={threadStateCountLabel(state, counts[state])}
             className={cn(
               "inline-flex h-5 items-center gap-0.5 rounded-sm px-1 text-xs tabular-nums hover:bg-sidebar-row-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70",

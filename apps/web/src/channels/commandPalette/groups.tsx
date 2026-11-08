@@ -5,10 +5,15 @@ import {
   BotIcon,
   CircleAlertIcon,
   CircleCheckIcon,
+  DiffIcon,
+  FolderTreeIcon,
+  GlobeIcon,
   HashIcon,
   LayoutGridIcon,
   LoaderCircleIcon,
+  Maximize2Icon,
   MoonIcon,
+  SmartphoneIcon,
 } from "lucide-react";
 
 import {
@@ -16,11 +21,13 @@ import {
   type CommandPaletteActionItem,
   type CommandPaletteGroup,
 } from "~/components/CommandPalette.logic";
+import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
 
 import {
   buildChannelsPaletteEntries,
   type ChannelsPaletteDestination,
   type ChannelsPaletteEntry,
+  type ChannelsToolContext,
 } from "./entries";
 import type { Channel, CrossChannelAgent } from "../types";
 
@@ -44,6 +51,21 @@ function iconFor(entry: ChannelsPaletteEntry): ReactNode {
       return <BellIcon className={ITEM_ICON_CLASS} />;
     case "schedules":
       return <AlarmClockIcon className={ITEM_ICON_CLASS} />;
+    case "thread-tool":
+      switch (entry.destination.tool) {
+        case "workspace":
+          return <Maximize2Icon className={ITEM_ICON_CLASS} />;
+        case "preview":
+          return <GlobeIcon className={ITEM_ICON_CLASS} />;
+        case "device":
+          return <SmartphoneIcon className={ITEM_ICON_CLASS} />;
+        case "diff":
+          return <DiffIcon className={ITEM_ICON_CLASS} />;
+        case "files":
+          return <FolderTreeIcon className={ITEM_ICON_CLASS} />;
+        case "pull-requests":
+          return <PullRequestGlyph.pullRequest className={ITEM_ICON_CLASS} />;
+      }
     case "board":
       switch (entry.destination.state) {
         case "needs-input":
@@ -87,6 +109,7 @@ function toGroup(
 export function buildChannelsPaletteGroups(input: {
   readonly channels: ReadonlyArray<Channel>;
   readonly agents: ReadonlyArray<CrossChannelAgent>;
+  readonly toolContext?: ChannelsToolContext | null;
   readonly run: (destination: ChannelsPaletteDestination) => Promise<void>;
 }): CommandPaletteGroup[] {
   const catalog = buildChannelsPaletteEntries(input);

@@ -21,6 +21,8 @@ import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import { resolveNewThreadModelSelection } from "@t3tools/shared/usageLimits";
 import { useEffect } from "react";
 
+import { publishLoadedSecretRequests } from "~/state/loadedSecretRequests";
+
 import { toastManager } from "~/components/ui/toast";
 import { useNowMinute } from "~/hooks/useNowMinute";
 import { randomUUID, newMessageId, newThreadId } from "~/lib/utils";
@@ -121,6 +123,10 @@ export function useChannelTimeline(
   const detail = useThreadProjection(threadRef);
   const shell = useQuietThreadShell(threadRef);
   const status = useThreadStatus(threadRef);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- shells lack secret requests, so an on-screen channel thread shares its loaded ones with the glance counts
+  useEffect(() => {
+    publishLoadedSecretRequests(threadRef, detail);
+  }, [threadRef, detail]);
   const history = useThreadHistory(threadRef);
   const resolveChild = useChildResolver(threadRef?.environmentId ?? null);
   const now = useNowMinute();
