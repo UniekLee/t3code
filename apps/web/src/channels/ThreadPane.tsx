@@ -62,7 +62,7 @@ export function ThreadPane({
         </div>
       ) : null}
       <MessageList
-        key={childThreadId}
+        key={`messages:${childThreadId}`}
         timeline={timeline}
         environmentId={channel.environmentId}
         workspaceRoot={channel.workspaceRoot}
@@ -72,7 +72,7 @@ export function ThreadPane({
       />
       <ThreadAttention threadRef={childRef} owner={channelOwner(channel)} subThread title={title} />
       <ChannelComposer
-        key={childThreadId}
+        key={`composer:${childThreadId}`}
         placeholder="Reply in thread"
         onSend={(text) => sendToThread(childRef, text)}
       />

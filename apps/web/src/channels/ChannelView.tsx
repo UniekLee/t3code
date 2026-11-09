@@ -90,7 +90,7 @@ export function ChannelView({
         {tab === "messages" ? (
           <>
             <MessageList
-              key={channel.key}
+              key={`messages:${channel.key}`}
               timeline={timeline}
               environmentId={channel.environmentId}
               workspaceRoot={channel.workspaceRoot}
@@ -112,7 +112,7 @@ export function ChannelView({
               onOpenThread={onOpenThread}
             />
             <ChannelComposer
-              key={channel.key}
+              key={`composer:${channel.key}`}
               placeholder={`Message #${channel.name}`}
               agents={agents}
               onSend={send}
